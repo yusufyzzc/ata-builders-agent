@@ -45,21 +45,23 @@ class TaskExecutionAgent:
 
     @staticmethod
     def _question_for(field_name: str, state: TaskState) -> str:
+        task = state.task_type.value.replace("_", " ")
+        known = ", ".join(f"{key}={value}" for key, value in state.slots.items()) or "no details yet"
         questions = {
-            "service_type": "What type of service do you want to book?",
-            "city": "What city should I search in?",
-            "date_range": "What date or date range should I use?",
-            "time_preference": "What time preference should I use?",
-            "budget": "What is your budget and currency?",
-            "count": "How many options should I return?",
-            "duration_days": "How many days should the plan cover?",
-            "destination": "What destination should I plan for?",
-            "attendee_name": "Who should the meeting be with?",
-            "attendee_email": f"What is {state.slots.get('attendee_name', 'the attendee')}'s email address?",
-            "reminder_text": "What should the reminder say?",
+            "service_type": f"For this {task}, what type of service should I book? Known details: {known}.",
+            "city": f"Which city should I use for this {task}? Known details: {known}.",
+            "date_range": f"What date or date range should I use for this {task}? Known details: {known}.",
+            "time_preference": f"What time preference should I use for this {task}? Known details: {known}.",
+            "budget": f"What is the maximum budget and currency for this {task}? Known details: {known}.",
+            "count": f"How many options should I return for this {task}? Known details: {known}.",
+            "duration_days": f"How many days should the plan cover? Known details: {known}.",
+            "destination": f"What destination should I plan for? Known details: {known}.",
+            "attendee_name": f"Who should the meeting be with? Known details: {known}.",
+            "attendee_email": f"What is {state.slots.get('attendee_name', 'the attendee')}'s email address? Known details: {known}.",
+            "reminder_text": f"What should the reminder say? Known details: {known}.",
             "task_goal": "What exactly would you like the agent to do?",
         }
-        return questions.get(field_name, f"Please provide: {field_name}")
+        return questions.get(field_name, f"Please provide {field_name}. Known details: {known}.")
 
     def _run_appointment(self, state: TaskState) -> None:
         calendar = self.tools.calendar_check(state.slots["date_range"], state.slots.get("time_preference"))
@@ -81,7 +83,9 @@ class TaskExecutionAgent:
         if booking.status != ToolStatus.SUCCESS:
             return
 
-        reminder = self.tools.reminder_create({"title": f"Appointment: {best['name']}", "when": best.get("slot"), "location": state.slots.get("city")})
+        reminder = self.tools.reminder_create(
+            {"title": f"Appointment: {best['name']}", "when": best.get("slot"), "location": state.slots.get("city")}
+        )
         state.add_tool_result(reminder)
 
     def _run_coworking_search(self, state: TaskState) -> None:
@@ -97,10 +101,13 @@ class TaskExecutionAgent:
         total = sum(item.get("cost", 0) for item in search.data["results"])
         budget = state.slots.get("budget", {})
         amount = budget.get("amount") if isinstance(budget, dict) else None
+        currency = budget.get("currency", "EUR") if isinstance(budget, dict) else "EUR"
         if amount and total > amount:
-            state.blockers.append(f"Estimated cost is {total} {budget.get('currency', 'EUR')}, which exceeds the budget of {amount} {budget.get('currency', 'EUR')}.")
+            state.blockers.append(
+                f"Estimated cost is {total} {currency}, which exceeds the budget of {amount} {currency}."
+            )
         else:
-            state.assumptions.append(f"Estimated total cost: {total} {budget.get('currency', 'EUR') if isinstance(budget, dict) else 'EUR'}.")
+            state.assumptions.append(f"Estimated total cost: {total} {currency}.")
 
     def _run_meeting(self, state: TaskState) -> None:
         calendar = self.tools.calendar_check(state.slots["date_range"], state.slots.get("time_preference"))
@@ -109,16 +116,20 @@ class TaskExecutionAgent:
             return
 
         slot = calendar.data["available_slots"][0]
-        booking = self.tools.booking_service({
-            "id": "meeting-1",
-            "type": "meeting",
-            "attendee_name": state.slots["attendee_name"],
-            "attendee_email": state.slots["attendee_email"],
-            "slot": slot,
-        })
+        booking = self.tools.booking_service(
+            {
+                "id": "meeting-1",
+                "type": "meeting",
+                "attendee_name": state.slots["attendee_name"],
+                "attendee_email": state.slots["attendee_email"],
+                "slot": slot,
+            }
+        )
         state.add_tool_result(booking)
         if booking.status == ToolStatus.SUCCESS:
-            reminder = self.tools.reminder_create({"title": f"Meeting with {state.slots['attendee_name']}", "when": slot["start"]})
+            reminder = self.tools.reminder_create(
+                {"title": f"Meeting with {state.slots['attendee_name']}", "when": slot["start"]}
+            )
             state.add_tool_result(reminder)
 
     def _run_reminder(self, state: TaskState) -> None:
