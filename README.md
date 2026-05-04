@@ -226,3 +226,13 @@ The tests cover:
 - missing information in non-interactive mode,
 - interactive clarification leading to a mock booking.
 
+## Review feedback addressed
+
+After the initial review, I improved the project in three areas:
+
+1. **Parser robustness** — the heuristic parser no longer relies on a fixed city allow-list. It can extract user-provided cities such as Gliwice or Gdansk instead of silently dropping unknown locations.
+
+2. **Context-aware clarifications** — clarification questions now include the task type and already collected information, so the agent asks only for missing data instead of repeating generic hard-coded questions.
+
+3. **Broader test coverage** — the test suite now covers happy paths, missing information, generic city extraction, contextual clarification, no results, tool failure, meeting email handling, and trip budget overflow.
+
