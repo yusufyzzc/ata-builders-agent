@@ -1,4 +1,8 @@
-# ATA Builders Take-Home Assignment — Task Execution AI Agent
+# ATA Builders Take-Home Assignment - Task Execution AI Agent
+
+![Tests](https://github.com/yusufyzzc/ata-builders-agent/actions/workflows/tests.yml/badge.svg)
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![uv](https://img.shields.io/badge/package%20manager-uv-purple)
 
 A small but production-minded task execution agent for the Junior AI Agentic Engineer internship assignment.
 
