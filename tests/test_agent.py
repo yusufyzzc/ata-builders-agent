@@ -90,3 +90,47 @@ def test_tool_failure_is_reported_as_blocker():
     agent = TaskExecutionAgent()
     state = agent.run("Find me 3 coworking spaces in api failure under $20/day", clarify=lambda _field, _question: "Warsaw")
     assert any("search_service failed" in blocker for blocker in state.blockers)
+
+
+def test_coworking_defaults_to_three_results_when_count_missing():
+    agent = TaskExecutionAgent()
+    state = agent.run("Find coworking spaces in Krakow under $20/day", clarify=None)
+
+    assert not state.blockers
+    assert state.slots["count"] == 3
+    assert len(state.tool_results[0].data["results"]) == 3
+    assert any("Defaulting coworking result count" in item for item in state.assumptions)
+
+
+def test_reminder_task_creates_reminder_tool_result():
+    agent = TaskExecutionAgent()
+    state = agent.run("Remind me to submit the assignment tomorrow", clarify=None)
+
+    assert not state.blockers
+    assert state.slots["reminder_text"] == "submit the assignment"
+    assert any(result.tool == "reminder_create" for result in state.tool_results)
+
+
+def test_unknown_task_requires_clearer_goal_before_tools():
+    agent = TaskExecutionAgent()
+    state = agent.run("Please handle this for me", clarify=None)
+
+    assert not state.tool_results
+    assert any("task_goal" in blocker for blocker in state.blockers)
+
+
+def test_appointment_search_failure_is_reported_after_calendar_check():
+    agent = TaskExecutionAgent()
+    state = agent.run("Book me an api failure appointment in Warsaw next week after 5pm", clarify=None)
+
+    assert any(result.tool == "calendar_check" for result in state.tool_results)
+    assert any("search_service failed" in blocker for blocker in state.blockers)
+
+
+def test_explicit_before_time_preference_is_extracted_for_meeting():
+    interpreter = TaskInterpreter()
+    state = interpreter.interpret("Schedule a meeting with John john@example.com next Tuesday before 11am")
+
+    assert state.task_type == TaskType.MEETING
+    assert state.slots["attendee_email"] == "john@example.com"
+    assert state.slots["time_preference"] == "before 11:00"
