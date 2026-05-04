@@ -6,6 +6,11 @@
 
 A small but production-minded task execution agent for the Junior AI Agentic Engineer internship assignment.
 
+## Preview
+
+https://github.com/user-attachments/assets/b89a54d0-c6ff-4f37-b7d4-3d857aeb7bab
+
+
 The agent can:
 
 - understand a user request,
@@ -20,7 +25,7 @@ The project is intentionally runnable in two modes:
 1. **Mock/offline mode** — works without API keys and demonstrates deterministic agent behavior.
 2. **LLM-assisted mode** — if `OPENAI_API_KEY` is set, the agent uses the OpenAI Responses API for intent and slot extraction, then still performs explicit tool orchestration in Python.
 
----
+
 
 ## Why this design?
 
@@ -47,7 +52,7 @@ The important product decision is that the LLM is **not trusted blindly**. It he
 
 This makes the agent easier to test and safer to extend.
 
----
+
 
 ## Required tools implemented
 
@@ -62,7 +67,7 @@ The assignment required these tools. They are implemented in `src/task_agent/too
 
 Mock tools were chosen because this keeps the repository easy to run for reviewers without needing paid external services, OAuth, calendar permissions, or booking accounts.
 
----
+
 
 ## Project structure
 
@@ -115,7 +120,6 @@ Run in non-interactive mode, where missing information becomes a blocker instead
 uv run python main.py "Book me a dentist appointment next week after 5pm" --no-interactive
 ```
 
----
 
 ## Optional OpenAI setup
 
@@ -134,14 +138,13 @@ OPENAI_MODEL=gpt-4.1-mini
 
 The agent uses the OpenAI Responses API only for intent/slot extraction. If the API key is missing or the API call fails, it falls back to deterministic heuristic parsing.
 
----
 
 ## Example 1: coworking search
 
 Command:
 
 ```bash
-uv run python main.py "Find me 3 coworking spaces in Warsaw under $20/day"
+uv run python main.py "Find me 3 coworking spaces in Warsaw under 20 USD /day"
 ```
 
 Expected behavior:
@@ -152,7 +155,7 @@ Expected behavior:
 - filters results under budget,
 - returns a final summary with recommended options.
 
----
+
 
 ## Example 2: dentist booking with clarification
 
@@ -174,7 +177,7 @@ Expected behavior:
 - creates a reminder,
 - returns confirmation and remaining blockers.
 
----
+
 
 ## Example 3: meeting scheduling
 
@@ -194,7 +197,7 @@ Expected behavior:
 - creates a reminder,
 - returns confirmation.
 
----
+
 
 ## Failure handling examples
 
@@ -214,7 +217,7 @@ The search tool returns `no_results` when no mock dataset matches the query or c
 
 The tools include deterministic failure branches, for example `api failure` in a search query triggers a mock search failure. This makes failure behavior easy to inspect and test.
 
----
+
 
 ## Tests
 
